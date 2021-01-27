@@ -56,7 +56,7 @@ def data_setup(symbol, data_len, seq_len):
     data = hstack(data_seq)
     n_steps = seq_len
     X, y = split_sequences(data, n_steps)
-    n_features = X.shape[2]
+    n_features = X.shape[0] #changed from 2 initially, invalid parameter
     n_seq = len(X)
     n_steps = seq_len
     print(X.shape)
@@ -66,7 +66,7 @@ def data_setup(symbol, data_len, seq_len):
     for i in range(len(y)):
         true_y.append([y[i][0],y[i][1]])
         
-    return X, array(true_y), n_features, minmax, n_steps, close, open_, high, low
+    return data, X, array(true_y), n_features, minmax, n_steps, close, open_, high, low
 
 def split_sequences(sequences, n_steps):
         X, y = list(), list()
@@ -218,11 +218,13 @@ def main():
     data_len = 100
     seq_len = 250
     
-    X, y, n_features, minmax, n_steps, close, open_, high, low = data_setup(symbol, data_len, seq_len)
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+    data, X, y, n_features, minmax, n_steps, close, open_, high, low = data_setup(symbol, data_len, seq_len)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.5, random_state = 42)
     
     # def initialize_network(n_steps,n_features,optimizer):
+    # n_features and n_steps come from data_setup()
     # return model
     optimizer = keras.optimizers.Adam(learning_rate=0.01)
     
@@ -239,14 +241,16 @@ def main():
     exe_time = time.time()
     loss='mse'
     
-    model, eval_test_loss = evaluation(exe_time, X_test, y_test, X_train, y_train, history, model, optimizer, loss)
+    model, mp_test_loss = evaluation(exe_time, X_test, y_test, X_train, y_train, history, model, optimizer, loss)
     
     # def market_predict(model, minmax, seq_len, n_features, n_steps, data, test_loss):
     # return pred, appro_loss
-    #pred, appro_loss = market_predict(model, minmax, seq_len, n_features, n_steps, data, test_loss)
+    # Data is collected automatically inside data_setup()
+    
+    pred, appro_loss = market_predict(model, minmax, seq_len, n_features, n_steps, data, mp_test_loss)
     
     # def create_order(pred_price, company, test_loss, appro_loss):
-    #create_order()
+    create_order(pred, symbol, mp_test_loss, appro_loss);
     
     
     
